@@ -4,6 +4,7 @@ library(epiphytoolR)
 library(epicrop)
 library(dplyr)
 library(ggplot2)
+library(gridExtra)
 load("data/g_weather.rda")
 # g_weather <- get_wth(lonlat = c(152.33, 27.55),
 #                      dates = c("2010-01-01", "2023-12-31"))
@@ -14,16 +15,23 @@ load("data/g_weather.rda")
 # Define UI for application that draws a histogram
 ui <- fluidPage(theme = shinytheme("darkly"),
                 tabsetPanel(
-                   tabPanel("Bacterial Blight",
+                   tabPanel("Epicrop",
                             sidebarLayout(
                                sidebarPanel(
                                   radioButtons("disease", "Select Disease",
-                                               choices = c("Bacterial Blight" = "bb")),
+                                               choices = c("Bacterial Blight" = "bb",
+                                                           "Brown Spot" = "bs",
+                                                           "Leaf Blast" = "lb",
+                                                           "Sheath Blight" = "sb",
+                                                           "Rice Tungro Spherical Virus" = "tu")),
                                   dateInput("startdate", "Date of emergence",
                                             value = "2023-03-19",
                                   min = "2010-01-01",max = "2023-10-30")),
                                # Main panel
-                               mainPanel(plotOutput("weather_plot"),
+                               mainPanel(h2("Weather plot"),
+                                         plotOutput("weather_plot"),
+                                         p(),
+                                         h2("Disease Intensity"),
                                          plotOutput("disease_plot"))
                                )
 
@@ -43,19 +51,38 @@ server <- function(input, output) {
              cat("Brown Spot")
              return(predict_brown_spot(g_weather,
                                 emergence = input$startdate))
-           }
+          }
+          if (input$disease == "lb"){
+             cat("Leaf Blast")
+             return(predict_leaf_blast(g_weather,
+                                       emergence = input$startdate))
+          }
+          if (input$disease == "sb"){
+             cat("Sheath Blight")
+             return(predict_sheath_blight(g_weather,
+                                          emergence = input$startdate))
+          }
+          if (input$disease == "tu"){
+             cat("Tungro")
+             return(predict_tungro(g_weather,
+                                       emergence = input$startdate))
+          }
     })
 
     output$disease_plot <- renderPlot({
 
-       ggplot(data = epicrop_out(),
-              aes(x = dates,
-                  y = intensity)) +
+       Intensity <-
+          ggplot(data = epicrop_out(),
+                 aes(x = dates,
+                     y = intensity)) +
           labs(y = "Intensity",
                x = "Date") +
           geom_line() +
           geom_point() +
           theme_classic()
+
+
+       Intensity
     })
 
     output$weather_plot <- renderPlot({
@@ -63,16 +90,31 @@ server <- function(input, output) {
           filter(YYYYMMDD >= input$startdate,
                  YYYYMMDD <= input$startdate + 120)
 
-          ggplot(w_dat,
-                 aes(x = YYYYMMDD,
-                     y = TEMP)) +
+       Tm <- ggplot(w_dat,
+                    aes(x = YYYYMMDD,
+                        y = TEMP)) +
           labs(y = "Temperature (C)",
                x = "Date") +
           geom_line(color = "red") +
-          geom_line(data = w_dat,
+          theme_classic()
+
+       RH <- ggplot(w_dat,
                     aes(x = YYYYMMDD,
-                        y = RHUM),color = "blue") +
-           theme_classic()
+                        y = RHUM)) +
+          labs(y = "Relative Humidity (%)",
+               x = "Date") +
+          geom_line(color = "blue") +
+          theme_classic()
+       rain <- ggplot(w_dat,
+                    aes(x = YYYYMMDD,
+                        y = RAIN)) +
+          labs(y = "Rainfall (mm)",
+               x = "Date") +
+          geom_col(color = "skyblue") +
+          theme_classic()
+
+       grid.arrange(Tm, RH, rain, ncol = 2)
+
     })
 
 
