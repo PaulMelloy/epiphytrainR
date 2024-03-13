@@ -81,8 +81,28 @@ server <- function(input, output) {
           geom_point() +
           theme_classic()
 
+       dat <- pivot_longer(
+          epicrop_out(),
+          cols = c("diseased", "removed", "latent", "infectious"),
+          names_to = "site",
+          values_to = "value"
+       )
 
-       Intensity
+       sier_plot <-
+          ggplot(data = dat,
+              aes(
+                 x = dates,
+                 y = value,
+                 shape = site,
+                 linetype = site
+              )) +
+          labs(y = "Sites",
+               x = "Date") +
+          geom_line(aes(group = site, colour = site)) +
+          geom_point(aes(colour = site)) +
+          theme_classic()
+
+       grid.arrange(Intensity, sier_plot, ncol = 2)
     })
 
     output$weather_plot <- renderPlot({
