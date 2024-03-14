@@ -1,11 +1,12 @@
 library(shiny)
 library(shinythemes)
-library(htmltools)
+#library(htmltools)
+library(shinycssloaders)
 library(epiphytoolR)
 library(epicrop)
 library(tidyr)
 library(dplyr)
-library(DT)
+#library(DT)
 library(ggplot2)
 library(leaflet)
 library(gridExtra)
@@ -26,24 +27,18 @@ ui <-
             "Start page",
             h1("epiphytrainR"),
             h2("About"),
-            p(
-               "This is a R shiny app to assist in teaching the principles of
-            plant disease epidemiology.",
-               HTML("You can find the source code for this app on github,",
-                    a("https://github.com/PaulMelloy/epiphytrainR/",
-                      href = "https://github.com/PaulMelloy/epiphytrainR/")
-               )
-            ),
+            "This is a R shiny app to assist in teaching the principles of
+            plant disease epidemiology. You can find the source code for this app on ",
+            a("github,",
+              "https://github.com/PaulMelloy/epiphytrainR/",
+              href = "https://github.com/PaulMelloy/epiphytrainR/"),
+            h2("Choose weather location"),
+            leafletOutput("worldmap"),
             h2("Acknowledgements"),
-            p(
-               HTML(
-                  "This app is developed by Dr Paul Melloy from the University of
-         Queensland using packages such as:",
-                  a("epicrop", href = "http://adamhsparks.github.io/epicrop/index.html"),
-                  " developed by",
-                  a("Prof. Adam Sparks", href = "https://adamhsparks.netlify.app/")
-               )
-            )
+            "This app is developed by ", a("Dr Paul Melloy",href = "https://paulmelloy.github.io/"),
+            "from",a("The University of Queensland", href = "https://www.uq.edu.au/"),
+            "using packages such as:", a("epicrop", href = "http://adamhsparks.github.io/epicrop/index.html"),
+            " developed by", a("Prof. Adam Sparks", href = "https://adamhsparks.netlify.app/")
          ),
       # --------------------  Tab 2 --------------------------
       tabPanel("Epicrop",
@@ -67,17 +62,11 @@ ui <-
                         max = "2023-10-30"),
                      p(),
                      h3("Acknowledgement"),
-                     p(
-                        HTML(
-                           "This app is developed by Dr Paul Melloy
-                                         using the epicrop package authored by",
-                           a("Prof. Adam Sparks", href = "https://adamhsparks.netlify.app/"),
-                           "find the epicrop package on",
-                           a("github", href = "https://github.com/adamhsparks/epicrop"),
-                           "or",
-                           a("codeburg", href = "https://codeberg.org/adamhsparks/epicrop"),
-                        )
-                     ),
+                     "epicrop model was authored by",
+                     a("Prof. Adam Sparks", href = "https://adamhsparks.netlify.app/"),
+                     "find the epicrop package on",
+                     a("github", href = "https://github.com/adamhsparks/epicrop"),
+                     "or", a("codeburg", href = "https://codeberg.org/adamhsparks/epicrop")
                   ),
                   # Main panel
                   mainPanel(
@@ -92,31 +81,75 @@ ui <-
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+
+   # Render map for farm address input
+   output$worldmap <- renderLeaflet({
+      leaflet() %>%
+         addProviderTiles("Esri.WorldTopoMap") %>%
+         # Centre the map in in the destination
+         setView(
+            lng = 152.33,
+            lat = -27.55,
+            zoom = 4
+         ) %>%
+         addMarkers(lng = 152.33,
+                    lat = -27.55,
+                    layerId = "gatton_start")
+   })
+
+   # Update the weather location map if either the map is clicked or, update
+   #   Delivery button is clicked
+   observeEvent(
+      input$worldmap_click, {
+         cat(input$worldmap_click[["lat"]]," ", input$worldmap_click[["lng"]])
+      leafletProxy("worldmap") %>%
+            removeMarker(layerId = "gatton_start") %>%
+            addMarkers(lng = input$worldmap_click[["lng"]],
+                       lat = input$worldmap_click[["lat"]],
+                       layerId = "weather_location")
+      })
+
+   weather_dat <- reactive({
+      if (is.null(input$worldmap_click)) {
+         return(g_weather)
+      }else{
+         showPageSpinner(type = 1,
+                         size = 3,
+                         caption = "Please wait while the weather data is downloaded ..." )
+      got_wth <- get_wth(
+         lonlat = c(input$worldmap_click[["lng"]],
+                    input$worldmap_click[["lat"]]),
+         dates = c("2010-01-01", "2023-12-31"))
+      hidePageSpinner()
+      return(got_wth)}
+      })
+
+
    epicrop_out <-
       reactive({
          if (input$disease == "bb") {
             #cat("Bacterial Blight")
-            return(predict_bacterial_blight(g_weather,
+            return(predict_bacterial_blight(weather_dat(),
                                             emergence = input$startdate))
          }
          if (input$disease == "bs") {
             #cat("Brown Spot")
-            return(predict_brown_spot(g_weather,
+            return(predict_brown_spot(weather_dat(),
                                       emergence = input$startdate))
          }
          if (input$disease == "lb") {
             #cat("Leaf Blast")
-            return(predict_leaf_blast(g_weather,
+            return(predict_leaf_blast(weather_dat(),
                                       emergence = input$startdate))
          }
          if (input$disease == "sb") {
             #cat("Sheath Blight")
-            return(predict_sheath_blight(g_weather,
+            return(predict_sheath_blight(weather_dat(),
                                          emergence = input$startdate))
          }
          if (input$disease == "tu") {
             #cat("Tungro")
-            return(predict_tungro(g_weather,
+            return(predict_tungro(weather_dat(),
                                   emergence = input$startdate))
          }
       })
@@ -157,7 +190,7 @@ server <- function(input, output) {
    })
 
    output$weather_plot <- renderPlot({
-      w_dat <- g_weather |>
+      w_dat <- weather_dat() |>
          filter(YYYYMMDD >= input$startdate,
                 YYYYMMDD <= input$startdate + 120)
 
