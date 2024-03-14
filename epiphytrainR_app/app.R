@@ -34,6 +34,9 @@ ui <-
               href = "https://github.com/PaulMelloy/epiphytrainR/"),
             h2("Choose weather location"),
             leafletOutput("worldmap"),
+            "Global weather data is sourced from the",
+            a("NASA POWER project", href = "https://power.larc.nasa.gov/"),
+            "via the R api", a("nasapower", href = "https://docs.ropensci.org/nasapower/"),
             h2("Acknowledgements"),
             "This app is developed by ", a("Dr Paul Melloy",href = "https://paulmelloy.github.io/"),
             "from",a("The University of Queensland", href = "https://www.uq.edu.au/"),
@@ -52,11 +55,13 @@ ui <-
                                      "Brown Spot" = "bs",
                                      "Leaf Blast" = "lb",
                                      "Sheath Blight" = "sb",
-                                     "Rice Tungro Spherical Virus" = "tu"
+                                     "Rice Tungro Spherical Virus" = "tu",
+                                     "Custom" = "custom"
                                      )),
+                     uiOutput("custom_disease"),
                      dateInput(
                         "startdate",
-                        "Date of emergence",
+                        "Date of rice crop emergence",
                         value = "2023-03-19",
                         min = "2010-01-01",
                         max = "2023-10-30"),
@@ -73,7 +78,7 @@ ui <-
                      h2("Weather plot"),
                      plotOutput("weather_plot"),
                      p(),
-                     h2("Disease Intensity"),
+                     h2("Disease progress"),
                      plotOutput("disease_plot")
                   )
                )))
@@ -129,41 +134,71 @@ server <- function(input, output) {
       reactive({
          if (input$disease == "bb") {
             #cat("Bacterial Blight")
-            return(predict_bacterial_blight(weather_dat(),
-                                            emergence = input$startdate))
+            epi_out<- predict_bacterial_blight(weather_dat(),
+                                            emergence = input$startdate)
          }
          if (input$disease == "bs") {
             #cat("Brown Spot")
-            return(predict_brown_spot(weather_dat(),
-                                      emergence = input$startdate))
+            epi_out<- predict_brown_spot(weather_dat(),
+                                      emergence = input$startdate)
          }
          if (input$disease == "lb") {
             #cat("Leaf Blast")
-            return(predict_leaf_blast(weather_dat(),
-                                      emergence = input$startdate))
+            epi_out<- predict_leaf_blast(weather_dat(),
+                                      emergence = input$startdate)
          }
          if (input$disease == "sb") {
             #cat("Sheath Blight")
-            return(predict_sheath_blight(weather_dat(),
-                                         emergence = input$startdate))
+            epi_out<- predict_sheath_blight(weather_dat(),
+                                         emergence = input$startdate)
          }
          if (input$disease == "tu") {
             #cat("Tungro")
-            return(predict_tungro(weather_dat(),
-                                  emergence = input$startdate))
+            epi_out<- predict_tungro(weather_dat(),
+                                  emergence = input$startdate)
          }
+         if (input$disease == "custom") {
+            #cat("Custom")
+            epi_out<- SIER(wth = weather_dat(),
+                           emergence = input$startdate,
+                           onset = 30
+                           )
+         }
+         epi_out <- epi_out |>
+            mutate(susceptible = sites - infectious - removed - latent)
+         return(epi_out)
       })
 
+
+
+   # Disease plots ----------------------------------------------
    output$disease_plot <- renderPlot({
+
+      coloured_lines <- c(Healthy = "darkgreen",
+                          Senesced = "gold",
+                          Diseased = "darkred")
+
       Intensity <-
          ggplot(data = epicrop_out(),
                 aes(x = dates,
-                    y = intensity)) +
-         labs(y = "Intensity",
-              x = "Date") +
+                    y = susceptible,
+                    colour = "Healthy")) +
+         labs(y = "Sites",
+              x = "Date",
+              colour = "Site") +
          geom_line() +
-         geom_point() +
-         theme_classic()
+         geom_line(data = epicrop_out(),
+                   aes(x = dates,
+                       y = senesced,
+                       colour = "Senesced")) +
+         geom_line(data = epicrop_out(),
+                   aes(x = dates,
+                       y = (latent + infectious + removed),
+                       colour = "Diseased")) +
+         theme_classic()+
+         ggtitle("Heathy, Senesced and Diseased sites")+
+         theme(legend.position = "bottom")+
+         scale_color_manual(values = coloured_lines)
 
       dat <- pivot_longer(
          epicrop_out(),
@@ -184,7 +219,10 @@ server <- function(input, output) {
               x = "Date") +
          geom_line(aes(group = site, colour = site)) +
          geom_point(aes(colour = site)) +
-         theme_classic()
+         theme_classic()+
+         theme(legend.position = "bottom")+
+         ggtitle("Diseased Plant Sites: Exposed, Infectious and Removed")
+
 
       grid.arrange(Intensity, sier_plot, ncol = 2)
    })
