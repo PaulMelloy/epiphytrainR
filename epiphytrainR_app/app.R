@@ -159,17 +159,107 @@ server <- function(input, output) {
          }
          if (input$disease == "custom") {
             #cat("Custom")
-            epi_out<- SIER(wth = weather_dat(),
-                           emergence = input$startdate,
-                           onset = 30
-                           )
-         }
+               epi_out <- SEIR(
+                  wth = weather_dat(),
+                  emergence = input$startdate,
+                  onset = input$onset,
+                  duration = 120L,
+                  rhlim = 90L,
+                  rainlim = 5L,
+                  H0 = input$H0,
+                  I0 = input$I0,
+                  RcA = cbind(c(0L, 10L, 20L, 30L, 40L, 50L, 60L, 70L, 80L, 90L, 100L, 110L, 120L),
+                              c(0.84,0.84,0.84,0.84,0.84,0.84,0.84,0.88,0.88,1.0,1.0,1.0,1.0)),
+                  RcT = cbind(
+                     c(12L, 16L, 20L, 24L, 28L, 32L, 36L, 40L),
+                     c(0, 0.42, 0.94, 0.94, 1.0, 0.85, 0.64, 0)),
+                  RcOpt = input$RcOpt,
+                  p = input$latent_period,
+                  i = input$infectious_period,
+                  Sx = 1000L,
+                  a = input$aggregation,
+                  RRS = input$RRS,
+                  RRG = input$RRG)}
+
          epi_out <- epi_out |>
             mutate(susceptible = sites - infectious - removed - latent)
          return(epi_out)
       })
 
+   output$custom_disease <- renderUI({
+      if (input$disease == "custom") {
+         tagList(
+         actionButton(inputId = "run_custom",
+                      label = "Custom Disease",
+                      status = "off",
+                      on = "Yes",
+                      off = "No"),
+            sliderInput("onset",
+                     "Onset of disease (days)",
+                     min = 1,
+                     max = 120,
+                     value = 30),
+         sliderInput("H0",
+                     "Initial Heathy sites",
+                     min = 1,
+                     max = 1000,
+                     value = 100),
+         sliderInput("I0",
+                     "Initial infectious sites",
+                     min = 1,
+                     max = 120,
+                     value = 1),
+         sliderInput("Tm_optim",
+                     "Optimum temperature for disease (C)",
+                     min = 0,
+                     max = 45,
+                     value = 24),
+         sliderInput("RH_optim",
+                     "Optimum Relative humidity for disease %",
+                     min = 30,
+                     max = 100,
+                     value = 90),
+         sliderInput("RcOpt",
+                     "Infection rate, sites per day",
+                     min = 0,
+                     max = 1,
+                     value = 0.5,
+                     step = 0.01),
+         sliderInput("latent_period",
+                     "Latent period (days)",
+                     min = 2,
+                     max = 30,
+                     value = 5),
+         sliderInput("infectious_period",
+                     "Infectious period (days)",
+                     min = 0,
+                     max = 100,
+                     value = 30),
+         sliderInput("aggregation",
+                     "Aggregation coeficient",
+                     min = 1,
+                     max = 20,
+                     value = 2.5,
+                     step = 0.1),
+         sliderInput("RRS",
+                     "Relative rate of senecence",
+                     min = 0,
+                     max = 0.2,
+                     value = 0.005,
+                     step = 0.001),
+         sliderInput("RRG",
+                     "Relative rate of Growth",
+                     min = 0,
+                     max = 1,
+                     value = 0.2,
+                     step = 0.01))
 
+      }else{
+         # it would be nuce here to return the default values for each of the
+         #   hard coded diseases options in epicrop
+         p("stuff goes here")
+      }
+   })
 
    # Disease plots ----------------------------------------------
    output$disease_plot <- renderPlot({
