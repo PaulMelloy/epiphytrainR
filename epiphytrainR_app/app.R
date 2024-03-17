@@ -18,7 +18,6 @@ library(leaflet)
 library(gridExtra)
 load("data/g_weather.rda")
 source("R/Tm_range.R")
-source("R/RH_range.R")
 # g_weather <- get_wth(lonlat = c(152.33, 27.55),
 #                      dates = c("2010-01-01", "2023-12-31"))
 # save(g_weather, file = "epiphytrainR_app/data/g_weather.rda")
