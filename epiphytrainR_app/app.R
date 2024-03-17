@@ -18,6 +18,7 @@ library(leaflet)
 library(gridExtra)
 load("data/g_weather.rda")
 source("R/Tm_range.R")
+source("R/RH_range.R")
 # g_weather <- get_wth(lonlat = c(152.33, 27.55),
 #                      dates = c("2010-01-01", "2023-12-31"))
 # save(g_weather, file = "epiphytrainR_app/data/g_weather.rda")
@@ -155,11 +156,9 @@ ui <-
                                                  min = 10,max = 50,step = 0.1,value = 35,)),
                                  plotOutput("R_Tm_plot", height = "250px"),
                                  hr(),
-                                 sliderInput("RH_optim",
-                                             "Optimum Relative humidity for disease %",
-                                             min = 30,
-                                             max = 100,
-                                             value = 90),
+                                 numericInput("rh_lim",
+                                              HTML("RH (%) threshold for wet leaves<br/>where infection is most likely"),
+                                                 min = 5,max = 99,step = 1,value = 90),
                                  hr(),
                                  radioButtons("R_Age",
                                               expression("Plant age effect on pathogen R"[0]),
@@ -296,7 +295,7 @@ server <- function(input, output) {
                   emergence = input$startdate,
                   onset = input$onset,
                   duration = 120L,
-                  rhlim = 90L,
+                  rhlim = input$rh_lim,
                   rainlim = 5L,
                   H0 = input$H0,
                   I0 = input$I0,
@@ -413,6 +412,8 @@ server <- function(input, output) {
             values_to = "value"
          )
 
+         date5 <-epicrop_out()$dates[5]
+
          sier_plot <-
             ggplot(data = dat,
                    aes(
@@ -423,6 +424,11 @@ server <- function(input, output) {
                    )) +
             labs(y = "Sites",
                  x = "Date") +
+            geom_text(aes(x = date5,
+                          y = max(value, na.rm = TRUE),
+                          label = paste0("AUDPC: ",
+                                         round(epicrop_out()$AUDPC[1],3))),
+                      vjust = -0.5, hjust = -0.5, size = 5) +
             geom_line(aes(group = site, colour = site),linewidth = 2) +
             geom_point(aes(colour = site)) +
             theme_classic()+
