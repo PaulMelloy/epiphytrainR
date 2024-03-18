@@ -43,7 +43,7 @@ ui <-
         leafletOutput("worldmap"),
         "Global weather data is sourced from the",
         a("NASA POWER project", href = "https://power.larc.nasa.gov/"),
-        "via the R api", a("nasapower", href = "https://docs.ropensci.org/nasapower/"),
+        "via the R API client", a("nasapower", href = "https://docs.ropensci.org/nasapower/"),
         h2("Acknowledgements"),
         "This app is developed by ", a("Dr Paul Melloy", href = "https://paulmelloy.github.io/"),
         "from", a("The University of Queensland", href = "https://www.uq.edu.au/"),
