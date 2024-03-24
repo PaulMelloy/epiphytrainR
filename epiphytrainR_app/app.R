@@ -51,6 +51,12 @@ ui <-
                      br(),
                      br(),
                      br(),
+                     h3("Activity"),
+                     p("Help us create a epidemiological model to simulate Net-blotch
+                       severity and yield loss in Barley. Do some research online and
+                       add to the following google sheets document:"),
+                     p(a("Net-blotch in barley epidemiological colaborative",
+                         href = "https://docs.google.com/spreadsheets/d/1Bw4OBOBwcQ4qbKh_C4Qcqe3rqLMhvHKH9nVn-X6RFFo/edit?usp=sharing")),
                      br(),
                      br(),
                      br(),
@@ -152,7 +158,7 @@ ui <-
                                                  min = -5,max = 28,step = 0.1,value = 8),
                                     numericInput("temp_max",
                                                  HTML("Maximum temperature (C) for <br /> disease growth"),
-                                                 min = 10,max = 50,step = 0.1,value = 35,)),
+                                                 min = 10,max = 50,step = 0.1,value = 35)),
                                  plotOutput("R_Tm_plot", height = "250px"),
                                  hr(),
                                  numericInput("rh_lim",
