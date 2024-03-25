@@ -10,6 +10,7 @@ install.packages(c("remotes", "shiny","shinythemes","htmltools", "tidyr","dplyr"
 remotes::install_github("daattali/shinycssloaders", dependencies = TRUE)
 remotes::install_github("PaulMelloy/epiphytoolR", dependencies = TRUE)
 remotes::install_github("adamhsparks/epicrop", dependencies = TRUE)
+
 ```
 
 Then run the shiny app using the following code:
