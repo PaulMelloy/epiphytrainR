@@ -1,15 +1,15 @@
 library(shiny)
-library(shinythemes)
+library(shinythemes,lib.loc = "/homevol/pmelloy/R/x86_64-pc-linux-gnu-library/4.4")
 # library(htmltools)
-library(shinycssloaders)
+library(shinycssloaders,lib.loc = "/homevol/pmelloy/R/x86_64-pc-linux-gnu-library/4.4")
 if (isFALSE("showPageSpinner" %in% ls("package:shinycssloaders"))) {
   # showPageSpinner is not in the CRAN package version but on github
   detach("package:shinycssloaders", unload = TRUE)
   remotes::install_github("daattali/shinycssloaders", dependencies = TRUE)
-  library(shinycssloaders)
+  library(shinycssloaders,lib.loc = "/homevol/pmelloy/R/x86_64-pc-linux-gnu-library/4.4")
 }
-library(epiphytoolR)
-library(epicrop)
+library(epiphytoolR,lib.loc = "/homevol/pmelloy/R/x86_64-pc-linux-gnu-library/4.4")
+library(epicrop,lib.loc = "/homevol/pmelloy/R/x86_64-pc-linux-gnu-library/4.4")
 library(tidyr)
 library(dplyr)
 # library(DT)
