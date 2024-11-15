@@ -9,7 +9,7 @@ Install the R packages `remotes` and `shiny`
 install.packages(c("remotes", "shiny","shinythemes","htmltools", "tidyr","dplyr","ggplot2","leaflet","gridExtra" ))
 remotes::install_github("daattali/shinycssloaders", dependencies = TRUE)
 remotes::install_github("PaulMelloy/epiphytoolR", dependencies = TRUE)
-remotes::install_github("adamhsparks/epicrop", dependencies = TRUE)
+remotes::install_git("https://codeberg.org/adamhsparks/epicrop")
 
 ```
 
