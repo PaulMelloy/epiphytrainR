@@ -1,5 +1,5 @@
 # cp -a /home/pmelloy/epiphytrainR/epiphytrainR_app /home/pmelloy/shiny-server
-.libPaths("/home/shared/r_libs/")
+.libPaths("/home/shared/r_libs/4.4")
 library(shiny)
 library(shinythemes)
 # library(htmltools)
